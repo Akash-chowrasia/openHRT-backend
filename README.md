@@ -60,7 +60,5 @@ https://headaway.herokuapp.com/
 ## How to start the server.
 
 * fork & clone the project.
-* `cd order-book`
-* `sudo npm i -g pnpm`
-* `pnpm i`
-* `pnpm start`
+* `npm i`
+* `npm start`
