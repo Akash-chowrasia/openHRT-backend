@@ -5,14 +5,14 @@ stages:
 build_job:
     stage: build
     only:
-        - main
+        - cicd
     script:
         - webpack
 
 deploy_job:
     stage: deploy
     only:
-        - main
+        - cicd
     script:
         - source ./.env.sh && source ./.secret.sh && nodemon -r esm index.dev.js
     dependencies:
