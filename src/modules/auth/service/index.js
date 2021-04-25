@@ -3,117 +3,125 @@ import createError from 'http-errors-lite';
 import { StatusCodes } from 'http-status-codes';
 import md5 from 'md5';
 import { nanoid } from 'nanoid';
-import {
-  emailVerificationModel,
-  forgotPasswordModel,
-  userModel,
-} from '../model';
-
-const VERIFICATION_CODE_SIZE = 17;
+import authModels from '../model';
 
 const authService = {};
 
-authService.registerUser = async (data) => {
-  const { email, password } = data;
-
-  const existingUser = await userModel.findOne({ email });
-
-  assert(
-    existingUser == null,
-    createError(StatusCodes.FORBIDDEN, 'Already exists')
-  );
-
-  const hashedPassword = md5(password);
-
-  await userModel.create({ ...data, password: hashedPassword });
-
-  const verificationCode = nanoid(VERIFICATION_CODE_SIZE);
-  await emailVerificationModel.create({
+const genVerificationCode = async (email) => {
+  const verificationCode = nanoid(50);
+  await authModels.user_verification.create({
     verification_code: verificationCode,
     email,
   });
-  Logger.debug(
-    `Registration verification email is: ${verificationCode.toString()}`
-  );
+  return verificationCode;
 };
 
-authService.loginUser = async ({ username, password }) => {
-  const user = await userModel.findOne({ email: username });
-  assert(user !== null, createError(StatusCodes.BAD_REQUEST, 'Login Failed'));
+authService.registerUser = async (data) => {
+  const hashedPassword = md5(data.password);
+  const { email } = data;
 
+  const emailExist = await authModels.user.findOne({ email });
   assert(
-    user.is_verified === true,
-    createError(StatusCodes.UNAUTHORIZED, 'User is not verified')
+    emailExist === null,
+    createError(StatusCodes.FORBIDDEN, 'This user already registered')
   );
 
+  const user = await authModels.user.create({
+    ...data,
+    password: hashedPassword,
+  });
+
+  return {
+    id: user._id,
+    verification_code: await genVerificationCode(email),
+    status: true,
+  };
+};
+
+authService.loginUser = async ({ email, password }) => {
+  const user = await authModels.user.findOne({ email });
+  assert(user !== null, createError(StatusCodes.BAD_REQUEST, 'Login Failed'));
   assert(
     md5(password) === user.password,
     createError(StatusCodes.UNAUTHORIZED, 'Incorrect Password')
   );
-
-  return user;
+  return {
+    user: user._id,
+    status: true,
+  };
 };
 
-authService.verifyEmail = async (verificationCode) => {
-  const record = await emailVerificationModel.findOne({
-    verification_code: verificationCode,
+authService.verifyEmail = async ({ verification_code, email }) => {
+  const record = await authModels.user_verification.findOne({
+    verification_code,
   });
 
-  assert(record !== null, createError(StatusCodes.BAD_REQUEST, 'Bad Request'));
-  const { email } = record;
-  await userModel.updateOne({ email }, { is_verified: true });
-
-  await emailVerificationModel.deleteOne({
-    verification_code: verificationCode,
-  });
-};
-
-authService.handleForgotPassword = async (email) => {
-  const user = await userModel.findOne({ email });
   assert(
-    user != null,
-    createError(StatusCodes.BAD_REQUEST, 'user Not Registered')
+    record !== null,
+    createError(
+      StatusCodes.BAD_REQUEST,
+      'either you are verified or you entered a wrong verification code'
+    )
   );
 
+  await authModels.user.updateOne({ email }, { is_email_verified: true });
+
+  await authModels.user_verification.deleteOne({
+    verification_code,
+  });
+  return {
+    status: true,
+  };
+};
+
+authService.resetPasswordRequest = async (email) => {
   const token = nanoid(50);
-  await forgotPasswordModel.create({ token, email });
-  Logger.debug(`Reset token is: ${token.toString()}`);
+  await authModels.reset_password.create({ token, email });
+  return token;
 };
 
 authService.resetPassword = async ({ token, new_password: newPassword }) => {
-  const record = await forgotPasswordModel.findOne({ token });
+  const user = await authModels.reset_password.findOne({ token });
   assert(
-    record !== null,
+    'user' !== null,
     createError(StatusCodes.NOT_ACCEPTABLE, 'cannot reset password ....')
   );
-  const { email } = record;
+  const { email } = user;
   const hashPassword = md5(newPassword);
-  await userModel.updateOne({ email }, { password: hashPassword });
-  await forgotPasswordModel.deleteOne({ token });
+  await authModels.user.updateOne({ email }, { password: hashPassword });
+  await authModels.reset_password.deleteOne({ token });
+  return {
+    status: true,
+  };
 };
 
 authService.changePassword = async ({
   old_password: oldPassword,
   new_password: newPassword,
-  user,
+  user_id: userId,
 }) => {
+  const user = await authModels.user.findById(userId);
   assert(
     md5(oldPassword) === user.password,
-    createError(StatusCodes.UNAUTHORIZED, 'Invalid Password')
+    createError(
+      StatusCodes.UNAUTHORIZED,
+      'Please enter the correct old password '
+    )
   );
 
   const hashPassword = md5(newPassword);
-  await userModel.findByIdAndUpdate(user._id, { password: hashPassword });
+  await authModels.user.findByIdAndUpdate(userId, { password: hashPassword });
+  return {
+    status: true,
+  };
 };
 
-authService.deleteUser = async ({
-  user_id: userId,
-  are_you_sure: areYouSure = false,
-}) => {
-  if (areYouSure) {
-    return userModel.findByIdAndDelete(userId);
-  }
-  return userModel.findByIdAndUpdate(userId, { is_deleted: true });
+authService.deleteUser = async (userId) => {
+  await authModels.user.findByIdAndUpdate(userId, { is_deleted: true });
+};
+
+authService.logoutUser = async (clientSession) => {
+  await authModels.session.deleteOne({ session_id: clientSession });
 };
 
 export default authService;

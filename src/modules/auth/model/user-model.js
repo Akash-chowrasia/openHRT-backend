@@ -1,24 +1,36 @@
 import mongoose from 'mongoose';
 
 const userSchema = new mongoose.Schema({
-  name: String,
-  email: String,
+  name: {
+    type: String,
+    required: true,
+  },
+
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+  },
+
   role: {
     type: String,
     enum: ['DOCTOR', 'PATIENT'],
-    default: 'PATIENT',
   },
-  password: String,
-  is_verified: {
+
+  password: {
+    type: String,
+    required: true,
+  },
+
+  is_email_verified: {
     type: Boolean,
-    default: false,
+    default: true,
   },
+
   is_deleted: {
     type: Boolean,
     default: false,
   },
 });
 
-userSchema.index({ email: 1 });
-
-export default mongoose.model('user_models', userSchema);
+export default mongoose.model('auth_users', userSchema);
