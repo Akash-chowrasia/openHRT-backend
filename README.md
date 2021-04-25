@@ -1,63 +1,45 @@
-# order-book
-This project is basicaly designed for people who wishes to buy some product & sell some product from the same platform as well.
+# openHRT Bacend Code sample
+This project is basicaly we are designing for people who are getting the features of some serious illness but can't ask anyone or need daily tracking of their health.
 
-* Every user first need to **register** into the application
-* After registration you need to **verify** your email with the provided code.
-* Now, you can **login** for processing.
-* user can add amount into his **wallet**.
-* you can **buy** any product from the list. amount will be deducted from the wallet.
-* you can add any number of product for **sell**. when someone buy's your product, the product will automatically added to your wallet.
-* Every Data fetching is followed by pagination.
-* The Application uses server side session handling for authentication system
+* we set a good authentication system into our project backend so that every people can feel free to use this application.
+* Till now we have developed some of api's for the sampleusing which docter's can provide the medical reports of their patients and can keep track and analysis of the health of patients.
+* For more we also build a sample backend API for the patients using which they can keep track & analysis of their complete health reports.
+* We have deployed the code over heroku, anyone can test the API's.
+
   
 
-## POSTMAN Link for testing the project.
+## Aplication Base URL: 
 
-https://app.getpostman.com/join-team?invite_code=27438ae007f4032e30b65bc449a1c01d&ws=2a6ad314-b018-4e4f-b7f3-661c9a391acd
+https://headaway.herokuapp.com/
 
-## prerequisit to execute this project
+## prerequisit to test these Api's
+* **POSTMAN** only.
 
-* **Node** & **npm** installed in your system.
-* **MongoDb** running locally on your system.
-* **POSTMAN** for testing the API's
+## Descriptions for different API's
 
-## How to start the server.
-
-* fork & clone the project.
-* `cd order-book`
-* `sudo npm i -g pnpm`
-* `pnpm i`
-* `pnpm start`
-
-## Descriptions for different API's 
-
-* **Register** : `/auth/register`
+* **Register** : `/api/auth/register`
   * method should be **POST**
-  * it will require body, please have a look at POSTMAN Collection for the body data.
-* **verify** : `/auth/verify`
+* **verify** : `/api/auth/verify`
   * method should be **POST**
-  * it will require body, please have a look at POSTMAN Collection for the body data.
-* **login** : `/auth/login`
+* **login** : `/api/auth/login`
   * method should be **POST**
-  * it will require body, please have a look at POSTMAN Collection for the body data.
-* **who am i** : `/auth/who-am-i`
+* **who am i** : `/api/auth/who-am-i`
   * method should be **GET**
-* **logout** : `/auth/login`
+* **logout** : `/login/auth/logout`
   * method should be **DELETE**
-* **reset password request** : `/auth/reset-password-request`
+* **reset password request** : `/api/auth/reset-password-request`
   * method should be **GET**
   * it will require body, please have a look at POSTMAN Collection for the body data.
-* **reset password** : `/auth/reset-password`
+* **reset password** : `/api/auth/reset-password`
   * method should be **PUT**
   * it will require body, please have a look at POSTMAN Collection for the body data.
-* **change passwrd** : `/auth/change-password`
+* **change passwrd** : `/api/auth/change-password`
   * method should be **PUT**
-  * it will require body, please have a look at POSTMAN Collection for the body data.
-* **Add product** : `/product/seller/`
+* **Add report** : `/api/report/`
   * method should be **POST**
-  * it will require body, please have a look at POSTMAN Collection for the body data.
-* **fetch your product as seller** : `/product/seller/?page=1&size=10`
+* **Doctors can have patients report** : `/api/report/`
   * method should be **GET**
+  
 * **fetch your sold products** : `/product/seller/sold?page=1&size=10`
   * method should be **GET**
 * **fetch all products as a buyer** : `/product/buyer/?page=1&size=10`
@@ -75,3 +57,10 @@ https://app.getpostman.com/join-team?invite_code=27438ae007f4032e30b65bc449a1c01
   * method should be **POST**
   * it will require body, please have a look at POSTMAN Collection for the body data.
 
+## How to start the server.
+
+* fork & clone the project.
+* `cd order-book`
+* `sudo npm i -g pnpm`
+* `pnpm i`
+* `pnpm start`
