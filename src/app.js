@@ -1,8 +1,8 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import createError from 'http-errors-lite';
 import cors from 'cors';
 import { StatusCodes } from 'http-status-codes';
+import createError from 'http-errors-lite';
 
 export const getAnApp = () => {
   const app = express();
