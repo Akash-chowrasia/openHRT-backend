@@ -1,46 +1,61 @@
 import { Router } from 'express';
-import passport from 'passport';
+import httpHandler from '../../commons/http-handler';
 import authService from '../service';
-import authMiddleware from '~/helpers/check-login';
-import httpHandler from '~/helpers/http-handler';
+import authMiddleware, {
+  doesUserExist,
+  isUserVerified,
+} from '../service/middleware';
+import sessionService from '../service/session-service';
 
 const router = Router();
-
 router.post(
   '/register',
   httpHandler(async (req, res) => {
-    await authService.registerUser(req.body);
+    const details = req.body;
+    const { verification_code: code } = await authService.registerUser(details);
     res.send({
-      message: 'We have sent you a mail, please verify yourself through it',
+      message: 'registered successful ',
+      verification_code: code,
     });
-  })
-);
-
-router.post(
-  '/login',
-  passport.authenticate('local'),
-  httpHandler(async (req, res) => {
-    res.send(req.session.passport.user);
   })
 );
 
 router.post(
   '/verify',
+  doesUserExist,
   httpHandler(async (req, res) => {
-    const { verification_code: verificationCode } = req.body;
-    await authService.verifyEmail(verificationCode);
+    const { verification_code: verificationCode, email } = req.body;
+    await authService.verifyEmail({
+      verification_code: verificationCode,
+      email,
+    });
     res.send({ message: 'user verified successfully' });
   })
 );
 
+router.post(
+  '/login',
+  isUserVerified,
+  httpHandler(async (req, res) => {
+    const { email, password } = req.body;
+    const { user: userId } = await authService.loginUser({
+      email,
+      password,
+    });
+    const sessionId = await sessionService.genSession(userId);
+    res
+      .cookie('session_id', sessionId, { httpOnly: true })
+      .send({ message: 'logged in' });
+  })
+);
+
 router.get(
-  '/forgot-password',
+  '/reset-password-request',
+  doesUserExist,
   httpHandler(async (req, res) => {
     const { email } = req.body;
-    await authService.handleForgotPassword(email);
-    res.send({
-      message: 'We have sent you a mail, please reset your password through it',
-    });
+    const token = await authService.resetPasswordRequest(email);
+    res.send({ token });
   })
 );
 
@@ -60,7 +75,8 @@ router.get(
   '/who-am-i',
   authMiddleware.isLoggedIn,
   httpHandler(async (req, res) => {
-    res.send(req.session.passport.user);
+    const { user } = req;
+    res.send(user);
   })
 );
 
@@ -69,10 +85,11 @@ router.put(
   authMiddleware.isLoggedIn,
   httpHandler(async (req, res) => {
     const { old_password, new_password } = req.body;
+    const userId = req.user._id;
     await authService.changePassword({
       old_password,
       new_password,
-      user: req.user,
+      user_id: userId,
     });
     res.send({ message: 'password changed successfully' });
   })
@@ -82,8 +99,9 @@ router.delete(
   '/logout',
   authMiddleware.isLoggedIn,
   httpHandler(async (req, res) => {
-    req.logout();
-    res.send({ message: 'Logged Out' });
+    const clientSession = req.cookies.session_id;
+    await authService.logoutUser(clientSession);
+    res.clearCookie('session_id').send({ message: 'logged out' });
   })
 );
 

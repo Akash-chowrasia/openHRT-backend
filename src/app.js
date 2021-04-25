@@ -1,32 +1,32 @@
-import express, { Router } from 'express';
+import express from 'express';
+import cookieParser from 'cookie-parser';
+import createError from 'http-errors-lite';
 import cors from 'cors';
-import { useHttpLogger } from '~/helpers/use-http-logger';
-import { errorHandler, notFoundHandler } from '~/helpers/express-middlewares';
-import { usePassport } from '~/helpers/use-passport';
-import authModule from '~/modules/auth';
+import { StatusCodes } from 'http-status-codes';
 
-const modules = [authModule];
-
-export const createApp = () => {
+export const getAnApp = () => {
   const app = express();
+  app.use(express.json());
+  app.use(cookieParser());
   app.use(
     cors({
-      origin: new RegExp(process.env.CORS_REGEX),
+      origin: '0.0.0.0',
       credentials: true,
     })
   );
-  app.use(express.json());
   return app;
 };
 
-export const useModules = {
-  init: (app) => {
-    const router = Router();
-    useHttpLogger(router);
-    usePassport(router);
-    modules.map((eachModule) => eachModule.init(router));
-    app.use(process.env.URL_PREFIX, router);
-  },
+const notFoundHandler = (req, res, next) => {
+  next(
+    createError(StatusCodes.NOT_FOUND, `${req.originalUrl} route not found.`)
+  );
+};
+
+const errorHandler = (err, req, res, _next) => {
+  res.status(err.statusCode || 500).send({
+    message: err.message,
+  });
 };
 
 export const finishApp = (app) => {

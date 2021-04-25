@@ -1,22 +1,24 @@
-import './helpers/logger';
-import './helpers/init-db';
+import './modules/db';
+import { Router } from 'express';
+import { finishApp, getAnApp } from './app';
+import authModule from './modules/auth';
 
-import { StatusCodes } from 'http-status-codes';
-import { createApp, finishApp, useModules } from '~/app';
+const PORT = process.env.PORT || 8000;
 
-const app = createApp();
+const app = getAnApp();
+const app1 = Router();
+app.use('/api', app1);
 
-useModules.init(app);
+authModule.init(app1);
 
-app.get('/healthy', (req, res) => {
-  res.sendStatus(StatusCodes.OK);
-});
+finishApp(app1);
 
-finishApp(app);
-
-try {
-  app.listen(Number(process.env.APP_PORT));
-  Logger.info(`App Server started over ${process.env.APP_PORT}`);
-} catch (err) {
-  Logger.error(`Failed to start App Server over ${process.env.APP_PORT}`);
-}
+(async () => {
+  try {
+    await app.listen(PORT);
+    console.log('-------   Server Started  ------');
+  } catch (err) {
+    console.error(err.message);
+    process.exit(1);
+  }
+})();

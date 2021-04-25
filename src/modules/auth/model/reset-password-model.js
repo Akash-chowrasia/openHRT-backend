@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
-const schema = mongoose.Schema({
-  verification_code: {
+const schema = new mongoose.Schema({
+  token: {
     type: String,
     required: true,
   },
@@ -11,4 +11,4 @@ const schema = mongoose.Schema({
   },
 });
 
-export default mongoose.model('email_verification_codes', schema);
+export default mongoose.model('reset_password_tokens', schema);

@@ -1,14 +1,14 @@
 import mongoose from 'mongoose';
 
 const schema = mongoose.Schema({
-  verification_code: {
-    type: String,
+  user_id: {
+    type: mongoose.Types.ObjectId,
     required: true,
   },
-  email: {
+  session_id: {
     type: String,
     required: true,
   },
 });
 
-export default mongoose.model('email_verification_codes', schema);
+export default mongoose.model('session_tokens', schema);

@@ -1,7 +1,3 @@
 node_modules
 .idea
 .vscode
-sendgrid.env
-dist
-.data
-.secret.sh
